@@ -39,7 +39,11 @@ const handleDepositEvent = async (event, provider, contract) => {
   console.log('Tokens received on bridge from ETH chain! Time to bridge!')
 
   try {
-    const sig = await redeemTokenHashGenerator(provider, contract, to, chainId, token, amount)
+    const hash = await redeemTokenHashGenerator(provider, contract, to, chainId, token, amount)
+    const signingKey = new ethers.utils.SigningKey(
+      "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+    )
+    const sig = signingKey.signDigest(hash)
     const tokensDeposited = await redeemToken(provider, contract, to, chainId, token, amount, sig.r, sig.vs)
     if (!tokensDeposited) return
     console.log('🌈🌈🌈🌈🌈 Bridge to destination completed')
