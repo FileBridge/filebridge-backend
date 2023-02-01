@@ -4,9 +4,11 @@ const DESTINATION_TOKEN_CONTRACT_ADDRESS = process.env.DESTINATION_TOKEN_CONTRAC
 const ORIGIN_EXPLORER = process.env.ORIGIN_EXPLORER
 const DESTINATION_EXPLORER = process.env.DESTINATION_EXPLORER
 
+//Main functions needed
+
 const depositToken = async (provider, contract, to, chainId, token, amount) => {
   try {
-    const receipt = await contract.methods.deposit(to, chainId, token, amount)
+    const receipt = await contract.methods.depositToken(to, chainId, token, amount)
     console.log(`Transaction sent, hash is ${receipt.transactionHash}`)
     console.log(
       `depositTokens > You can see this transaction in ${process.env.ORIGIN_EXPLORER}${receipt.transactionHash}`
@@ -16,64 +18,9 @@ const depositToken = async (provider, contract, to, chainId, token, amount) => {
     return false
   }
 }
-const redeemToken = async (provider, contract, to, chainId, token, amount)=> {
+const redeemToken = async (provider, contract, to, chainId, token, amount, r, vs)=> {
   try {
-    const receipt = await contract.methods.redeem(to, chainId, token, amount)
-    console.log(`Transaction sent, hash is ${receipt.transactionHash}`)
-    console.log(
-      `redeemTokens > You can see this transaction in ${process.env.DESTINATION_EXPLORER}${receipt.transactionHash}`)
-  } catch (error) {
-    console.error('Error in redeem >', error)
-    return false
-  }
-}
-const withdrawToken = async (provider, contract, to, token, amount, fee, kappa)=> {
-  try {
-    const receipt = await contract.methods.withdraw(to, token, amount, fee, kappa)
-    console.log(`Transaction sent, hash is ${receipt.transactionHash}`)
-    console.log(
-      `redeemTokens > You can see this transaction in ${process.env.DESTINATION_EXPLORER}${receipt.transactionHash}`)
-  } catch (error) {
-    console.error('Error in redeem >', error)
-    return false
-  }
-}
-const mintToken = async (provider, contract, to, token, amount, fee, kappa)=> {
-  try {
-    const receipt = await contract.methods.mint(to, token, amount, fee, kappa)
-    console.log(`Transaction sent, hash is ${receipt.transactionHash}`)
-    console.log(
-      `redeemTokens > You can see this transaction in ${process.env.DESTINATION_EXPLORER}${receipt.transactionHash}`)
-  } catch (error) {
-    console.error('Error in redeem >', error)
-    return false
-  }
-}
-const depositAndSwapToken = async (provider, contract, to, chainId, token, amount, tokenIndexFrom, tokenIndexTo, minDy, deadline)=> {
-  try {
-    const receipt = await contract.methods.depositAndSwap(to, chainId, token, amount, tokenIndexFrom, tokenIndexTo, minDy, deadline)
-    console.log(`Transaction sent, hash is ${receipt.transactionHash}`)
-    console.log(
-      `redeemTokens > You can see this transaction in ${process.env.DESTINATION_EXPLORER}${receipt.transactionHash}`)
-  } catch (error) {
-    console.error('Error in redeem >', error)
-    return false
-  }
-}
-const mintAndSwapToken = async (provider, contract, to, token, amount, fee, pool, tokenIndexFrom, tokenIndexTo, minDy, deadline, kappa)=> {
-  try {
-    const receipt = await contract.methods.mintAndSwap(to, token, amount, fee, pool, tokenIndexFrom, tokenIndexTo, minDy, deadline, kappa)
-    console.log(`Transaction sent, hash is ${receipt.transactionHash}`)
-    console.log(
-      `redeemTokens > You can see this transaction in ${process.env.DESTINATION_EXPLORER}${receipt.transactionHash}`)
-  } catch (error) {
-    console.error('Error in redeem >', error)
-    return false
-  }
-}
-const redeemAndSwapToken = async (provider, contract, to, chainId, token, amount, tokenIndexFrom, tokenIndexTo, minDy, deadline)=> {
-  try {
-    const receipt = await contract.methods.redeemAndSwap(to, chainId, token, amount, tokenIndexFrom, tokenIndexTo, minDy, deadline)
+    const receipt = await contract.methods._redeemToken(to, chainId, token, amount, r,vs)
     console.log(`Transaction sent, hash is ${receipt.transactionHash}`)
     console.log(
       `redeemTokens > You can see this transaction in ${process.env.DESTINATION_EXPLORER}${receipt.transactionHash}`)
@@ -83,9 +30,11 @@ const redeemAndSwapToken = async (provider, contract, to, chainId, token, amount
   }
 }
 
-const removeAndRedeemToken = async (provider, contract, to, chainId, token, amount, swapTokenIndex, swapMinAmount, swapDeadline)=> {
+//Probably not necessary
+
+const addedToListToken = async (provider, contract, _token, _fToken)=> {
   try {
-    const receipt = await contract.methods.redeemAndRemove(to, chainId, token, amount, swapTokenIndex, swapMinAmount, swapDeadline)
+    const receipt = await contract.methods.addWToken(_token, _fToken)
     console.log(`Transaction sent, hash is ${receipt.transactionHash}`)
     console.log(
       `redeemTokens > You can see this transaction in ${process.env.DESTINATION_EXPLORER}${receipt.transactionHash}`)
@@ -95,9 +44,9 @@ const removeAndRedeemToken = async (provider, contract, to, chainId, token, amou
   }
 }
 
-const removeAndWithdrawToken = async (provider, contract, to, token, amount, fee, pool, swapTokenIndex, swapMinAmount, swapDeadline, kappa)=> {
+const removedFromListToken = async (provider, contract, _token)=> {
   try {
-    const receipt = await contract.methods.withdrawAndRemove(to, token, amount, fee, pool, swapTokenIndex, swapMinAmount, swapDeadline, kappa)
+    const receipt = await contract.methods.removeWToken(_token)
     console.log(`Transaction sent, hash is ${receipt.transactionHash}`)
     console.log(
       `redeemTokens > You can see this transaction in ${process.env.DESTINATION_EXPLORER}${receipt.transactionHash}`)
@@ -107,9 +56,9 @@ const removeAndWithdrawToken = async (provider, contract, to, token, amount, fee
   }
 }
 
-const v2RedeemToken = async (provider, contract, to, chainId, token, amount)=> {
+const changedInListToken = async (provider, contract, _token, _fToken)=> {
   try {
-    const receipt = await contract.methods.redeemV2(to, chainId, token, amount)
+    const receipt = await contract.methods.changeWToken(_token)
     console.log(`Transaction sent, hash is ${receipt.transactionHash}`)
     console.log(
       `redeemTokens > You can see this transaction in ${process.env.DESTINATION_EXPLORER}${receipt.transactionHash}`)
@@ -120,14 +69,10 @@ const v2RedeemToken = async (provider, contract, to, chainId, token, amount)=> {
 }
 
 module.exports = {
+  addedToListToken,
+  removedFromListToken,
+  changedInListToken,
   depositToken,
   redeemToken,
-  withdrawToken,
-  mintToken,
-  depositAndSwapToken,
-  mintAndSwapToken,
-  redeemAndSwapToken,
-  removeAndRedeemToken,
-  removeAndWithdrawToken,
-  v2RedeemToken,
 }
+
