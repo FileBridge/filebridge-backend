@@ -6,10 +6,6 @@ const DESTINATION_EXPLORER = process.env.DESTINATION_EXPLORER
 
 //Main functions needed
 
-
-
-
-
 const depositToken = async (provider, contract, to, chainId, token, amount) => {
   try {
     const receipt = await contract.methods.depositToken(to, chainId, token, amount)
@@ -23,20 +19,6 @@ const depositToken = async (provider, contract, to, chainId, token, amount) => {
   }
 }
 
-const signingKey = new ethers.utils.SigningKey(
-  "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
-)
-/*
-const sig = signingKey.signDigest(hash)
-  await contract.methods.redeemToken(
-    deployer.address,
-    1,
-    mockToken.address,
-    amountOfDai,
-    sig.r,
-    sig._vs
-  )
-  */
 const redeemTokenHashGenerator = async(provider, contract, to, chainId, token, amount) => {
   try {
     const receipt = await contract.methods.redeemTokenHashGenerator(to, chainId, token, amount)
