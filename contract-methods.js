@@ -6,6 +6,10 @@ const DESTINATION_EXPLORER = process.env.DESTINATION_EXPLORER
 
 //Main functions needed
 
+
+
+
+
 const depositToken = async (provider, contract, to, chainId, token, amount) => {
   try {
     const receipt = await contract.methods.depositToken(to, chainId, token, amount)
@@ -18,6 +22,33 @@ const depositToken = async (provider, contract, to, chainId, token, amount) => {
     return false
   }
 }
+
+const signingKey = new ethers.utils.SigningKey(
+  "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+)
+/*
+const sig = signingKey.signDigest(hash)
+  await contract.methods.redeemToken(
+    deployer.address,
+    1,
+    mockToken.address,
+    amountOfDai,
+    sig.r,
+    sig._vs
+  )
+  */
+const redeemTokenHashGenerator = async(provider, contract, to, chainId, token, amount) => {
+  try {
+    const receipt = await contract.methods.redeemTokenHashGenerator(to, chainId, token, amount)
+    console.log(`Transaction signature, hash is ${receipt.transactionHash}`)
+    return receipt
+
+  } catch (error) {
+    console.error('Error in redeem >', error)
+    return false
+  }
+}
+
 const redeemToken = async (provider, contract, to, chainId, token, amount, r, vs)=> {
   try {
     const receipt = await contract.methods.redeemToken(to, chainId, token, amount, r,vs)
@@ -74,5 +105,5 @@ module.exports = {
   changedInListToken,
   depositToken,
   redeemToken,
+  redeemTokenHashGenerator,
 }
-
