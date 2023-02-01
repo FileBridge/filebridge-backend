@@ -20,7 +20,7 @@ const depositToken = async (provider, contract, to, chainId, token, amount) => {
 }
 const redeemToken = async (provider, contract, to, chainId, token, amount, r, vs)=> {
   try {
-    const receipt = await contract.methods._redeemToken(to, chainId, token, amount, r,vs)
+    const receipt = await contract.methods.redeemToken(to, chainId, token, amount, r,vs)
     console.log(`Transaction sent, hash is ${receipt.transactionHash}`)
     console.log(
       `redeemTokens > You can see this transaction in ${process.env.DESTINATION_EXPLORER}${receipt.transactionHash}`)
