@@ -4,30 +4,48 @@ const Web3 = require('web3')
 require('dotenv').config()
 
 const {
+  depositToken,
+  depositFToken,
+  //depositNativeToken,
+
+  redeemToken,
+  redeemFToken,
+  //redeemNativeToken,
+
+  redeemTokenHashGenerator,
+  redeemFTokenHashGenerator, 
+  //redeemNativeTokenHashGenerator,
+
+  nonces,
+
   addedToListToken,
   removedFromListToken,
   changedInListToken,
-  depositToken,
-  redeemToken,
-  redeemTokenHashGenerator
 } = require('./contract-methods.js')
 
-const ETH_CONTRACT_ADDRESS = process.env.ETH_TOKEN_CONTRACT_ADDRESS //Cuidado porque el token va cambiando así que pueden ser varios NO CONSTANTE
-const FEVM_CONTRACT_ADDRESS = process.env.FVM_TOKEN_CONTRACT_ADDRESS //Cuidado porque el token va cambiando así que pueden ser varios NO CONSTANTE
+const GOERLI_WSS_ENDPOINT = process.env.GOERLI_WSS_ENDPOINT
+const GOERLI_HTTPS_ENDPOINT = process.env.GOERLI_HTTPS_ENDPOINT
+const GOERLI_FDAI_CONTRACT_ADDRESS = process.env. GOERLI_TOKEN_CONTRACT_ADDRESS
+const HYPERSPACE_WSS_ENDPOINT = process.env.HYPERSPACE_WSS_ENDPOINT
+const HYPERSPACE_HTTPS_ENDPOINT = process.env.HYPERSPACE_HTTPS_ENDPOINT
+const HYPERSPACE_FDAI_CONTRACT_ADDRESS = process.env.HYPERSPACE_TOKEN_CONTRACT_ADDRESS
 const BRIDGE_WALLET = process.env.BRIDGE_WALLET
+const BRIDGE_PRIV_KEY = process.env.BRIDGE_PRIV_KEY
+const GOERLI_EXPLORER = process.env.GOERLI_EXPLORER
+const HYPERSPACE_EXPLORER = process.env.HYPERSPACE_EXPLORER
+const WALLET_ZERO = process.env.WALLET_ZERO
 
-const BRIDGE_WALLET_KEY = process.env.BRIDGE_PRIV_KEY
-
-ethChainId =  5 //Goerli ChainId
-fevmChainId = 3141 //HyperSpace Chain Id
-maticChainId = 80001 //Mumbai ChainId
+/*
+GoerliChainId =  1
+HyperSpaceChainId = 3141
+*/
 
 const DAI_ABIJSON = require('./DAI.json')
 const FDAI_ABIJSON = require('./FDAI.json')
 
-const handleDepositEvent = async (event, provider, contract) => { //function that is called when a bridge to FEVM network from ETH. 
+const handleDepositEvent = async (event, provider, contract) => {
   console.log('handleDepositEvent')
-  const { to, chainId, token, amount } = event.returnValues //we get the event values
+  const { to, chainId, token, amount } = event.returnValues
   console.log('to :>> ', to)
   console.log('chainId :>> ', chainId)
   console.log('token :>> ', token)
@@ -35,72 +53,132 @@ const handleDepositEvent = async (event, provider, contract) => { //function tha
   console.log('============================')
 
   console.log('Tokens received on bridge from ETH chain! Time to bridge!')
-  //First we build the hash of the transaction in the other chain. 
-  try {
-    const hash = await redeemTokenHashGenerator(provider, contract, to, chainId, token, amount)
-    //That is the wallet key to sign the transaction, will need to be stored in an API and not hardcoded. 
-    const signingKey = new ethers.utils.SigningKey(
-      "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
-    )
-    // We sign the transaction
-    const sig = signingKey.signDigest(hash)
-    //We call the function redeemToken with the previous signature. 
-    const tokensDeposited = await redeemToken(provider, contract, to, chainId, token, amount, sig.r, sig.vs)
-    if (!tokensDeposited) return
-    console.log('🌈🌈🌈🌈🌈 Bridge to destination completed')
-  } catch (err) {
-    console.error('Error processing transaction', err)
-    // TODO: return funds
+  if (event == TokenDeposited) {
+    try {
+      const nonce = await nonces(provider, contract, BRIDGE_WALLET)
+      const hash = await redeemTokenHashGenerator(provider, contract, to, chainId, token, amount, nonce)
+      const signingKey = new ethers.utils.SigningKey(BRIDGE_PRIV_KEY)
+      const sig = signingKey.signDigest(hash)
+      const tokensDeposited  
+      try {
+        const nonce = await nonces(provider, contract, BRIDGE_WALLET)
+        const hash = await redeemTokenHashGenerator(provider, contract, to, chainId, token, amount, nonce)
+        const signingKey = new ethers.utils.SigningKey(BRIDGE_PRIV_KEY)
+        const sig = signingKey.signDigest(hash)
+        const tokensDeposited = await redeemToken(provider, contract, to, chainId, token, amount, sig.r, sig.vs)
+        if (!tokensDeposited) return
+        console.log('🌈🌈🌈🌈🌈 Bridge to destination completed')
+      } catch (err) {
+        console.error('Error processing transaction', err)
+        // TODO: return funds
+        } = await redeemToken(provider, contract, to, chainId, token, amount, sig.r, sig.vs)
+      if (!tokensDeposited) return
+      console.log('🌈🌈🌈🌈🌈 Bridge to destination completed')
+    } catch (err) {
+      console.error('Error processing transaction', err)
+      // TODO: return funds
     }
+  } else if (event == FTokenDeposited) {
+    try {
+      const nonce = await nonces(provider, contract, BRIDGE_WALLET)
+      const hash = await redeemFTokenHashGenerator(provider, contract, to, chainId, token, amount, nonce)
+      const signingKey = new ethers.utils.SigningKey(BRIDGE_PRIV_KEY)
+      const sig = signingKey.signDigest(hash)
+      const tokensDeposited  
+      try {
+        const nonce = await nonces(provider, contract, BRIDGE_WALLET)
+        const hash = await redeemFTokenHashGenerator(provider, contract, to, chainId, token, amount, nonce)
+        const signingKey = new ethers.utils.SigningKey(BRIDGE_PRIV_KEY)
+        const sig = signingKey.signDigest(hash)
+        const tokensDeposited = await redeemFToken(provider, contract, to, chainId, token, amount, sig.r, sig.vs)
+        if (!tokensDeposited) return
+        console.log('🌈🌈🌈🌈🌈 Bridge to destination completed')
+      } catch (err) {
+        console.error('Error processing transaction', err)
+        // TODO: return funds
+        } = await redeemFToken(provider, contract, to, chainId, token, amount, sig.r, sig.vs)
+      if (!tokensDeposited) return
+      console.log('🌈🌈🌈🌈🌈 Bridge to destination completed')
+    } catch (err) {
+      console.error('Error processing transaction', err)
+      // TODO: return funds
+    }
+    
+  } /*else if (event == NativeTokenDeposited) {
+    
+  }*/
 
 }
 
-
 const main = async () => {''
-  const ethWebSockerProvider = new Web3(process.env.ETH_WSS_ENDPOINT) // Goerli Testnet node provider
-  const fevmWebSockerProvider = new Web3(process.env.FEVM_WSS_ENDPOINT) // Hyperspace Testnet node provider
+  const goerliWebSockerProvider = new Web3(process.env.GOERLI_WSS_ENDPOINT ) //with the Id I need to determine what is the originWebSockerProvider IS NOT A CONSTANT
+  const hyperspaceWebSockerProvider = new Web3(process.env.HYPERSPACE_WSS_ENDPOINT) //with the Id i need to determine what is the destinationWebSockerProvider IS NOT A CONSTANT
   
   // adds account to sign transactions
-  ethWebSockerProvider.eth.accounts.wallet.add(BRIDGE_WALLET_KEY) //For now not used, the key is hardcoded. 
-  fevmWebSockerProvider.eth.accounts.wallet.add(BRIDGE_WALLET_KEY) // Missing
+  goerliWebSockerProvider.eth.accounts.wallet.add(BRIDGE_WALLET_KEY)
+  hyperspaceWebSockerProvider.eth.accounts.wallet.add(BRIDGE_WALLET_KEY)
 
-  const ethNetworkId = await ethWebSockerProvider.eth.net.getId() // I have the Id in the event
-  const fevmNetworkId = await fevmWebSockerProvider.eth.net.getId() //I have the Id in the event
+  const goerliNetworkId = await goerliWebSockerProvider.eth.net.getId() // I have the Id in the event
+  const hyperspaceNetworkId = await hyperspaceWebSockerProvider.eth.net.getId() //I have the Id in the event
 
-  console.log('oriNetworkId :>> ', ethNetworkId)
-  console.log('destNetworkId :>> ', fevmNetworkId)
+  console.log('oriNetworkId :>> ', goerliNetworkId)
+  console.log('destNetworkId :>> ', hyperspaceNetworkId)
 
-  const ethTokenContract = new ethWebSockerProvider.eth.Contract( // Token and contract the provider is listening, FDAI in ETH
-    DAI_ABIJSON.abi,
-    ETH_CONTRACT_ADDRESS
+  // Contracts and tokens we want to listen from. 
+
+  const goerliFDAIContract = new goerliWebSockerProvider.eth.Contract(
+    FDAI_ABIJSON.abi,
+    GOERLI_FDAI_CONTRACT_ADDRESS
   )
 
-  const fevmTokenContract = new fevmWebSockerProvider.eth.Contract( // Token and contract the provider is listening, FDAI in FEVM
-      FDAI_ABIJSON.abi,
-      FEVM_CONTRACT_ADDRESS
-    )
+  const hyperspaceFDAIContract = new hyperspaceWebSockerProvider.eth.Contract(
+    FDAI_ABIJSON.abi,
+    HYPERSPACE_FDAI_CONTRACT_ADDRESS
+  )
 
-  ethTokenContract.events //that is a constant with the contract address and the token
+  //Event-watcher
+
+  //Event-watcher for FDAI in the Goerli network
+
+  goerliFDAIContract.events //that is a constant with the contract address and the token
     .Transfer(options)
-    .on('data', async (event) => { //gets the data when an events happens
-      const { to, chainId, token, amount } = event.returnValues //safe the values from the event
-      if (chainId == maticChainId) { //we check to what chain wants to be send, and we call the function for that network.
+    .on('data', async (event) => {
+      const { to, chainId, token, amount } = event.returnValues
+      if (chainId == maticChainId) {
         // In case we want to add it. 
-
-      } else if (chainId == fevmChainId) {//we check to what chain wants to be send, and we call the function for that network.
+      } else if (chainId == hyperspaceNetworkId) {
         await handleDepositEvent(
           event,
-          femWebSockerProvider, 
-          fevmTokenContract
+          hyperspaceWebSockerProvider, 
+          hyperspaceFDAIContract
         )
-
       }
     })
     .on('error', (err) => {
       console.error('Error: ', err)
     })
-  console.log(`Waiting for Transfer events on ${ETH_CONTRACT_ADDRESS}`)
-  
+  console.log(`Waiting for Transfer events on ${HYPERSPACE_TOKEN_CONTRACT_ADDRESS}`)
+
+//Event-watcher for FDAI in the Hyperspace Network
+
+  hyperspaceFDAIContract.events //that is a constant with the contract address and the token
+  .Transfer(options)
+  .on('data', async (event) => {
+    const { to, chainId, token, amount } = event.returnValues
+    if (chainId == maticChainId) {
+      // In case we want to add it. 
+    } else if (chainId == goerliNetworkId) {
+      await handleDepositEvent(
+        event,
+        goerliWebSockerProvider, 
+        goerliFDAIContract
+      )
+    }token
+  })
+  .on('error', (err) => {
+    console.error('Error: ', err)
+  })
+console.log(`Waiting for Transfer events on ${GOERLI_FDAI_CONTRACT_ADDRESS}`) 
 }
 
 main()
