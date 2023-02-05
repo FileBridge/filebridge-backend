@@ -53,60 +53,83 @@ const web3 = new Web3(new Web3.providers.HttpProvider(GOERLI_HTTPS_ENDPOINT));
 /*
 GoerliChainId =  5
 HyperSpaceChainId = 3141
-mumbaiChainId
+mumbaiChainId =
 */
 
 const DAI_ABIJSON = require("./DAI.json");
 const FDAI_ABIJSON = require("./FileBridge.json");
 
-/*const handleDepositEvent = async (event, provider, contract) => {
-  console.log('handleDepositEvent')
-  const { to, chainId, token, amount } = event.returnValues
-  console.log('to :>> ', to)
-  console.log('chainId :>> ', chainId)
-  console.log('token :>> ', token)
-  console.log('amount :>> ', amount)
-  console.log('============================')
-
-  console.log('Tokens received on bridge from ETH chain! Time to bridge!')
-  if (event == TokenDeposited) {
-    try {
-      const nonce = await nonces(provider, contract, BRIDGE_WALLET)
-      const hash = await redeemTokenHashGenerator(provider, contract, to, chainId, token, amount, nonce)
-      const signingKey = new ethers.utils.SigningKey(BRIDGE_PRIV_KEY)
-      const sig = signingKey.signDigest(hash)
-      const tokensDeposited = await redeemToken(provider, contract, to, chainId, token, amount, sig.r, sig.vs)
-      if (!tokensDeposited) return
-      console.log('🌈🌈🌈🌈🌈 Bridge to destination completed')
-      if (!tokensDeposited) return
-      console.log('🌈🌈🌈🌈🌈 Bridge to destination completed')
-    } catch (err) {
-      console.error('Error processing transaction', err)
-      // TODO: return funds
-    }
-  } else if (event == FTokenDeposited) {
-    try {
-      const nonce = await nonces(provider, contract, BRIDGE_WALLET)
-      const hash = await redeemFTokenHashGenerator(provider, contract, to, chainId, token, amount, nonce)
-      const signingKey = new ethers.utils.SigningKey(BRIDGE_PRIV_KEY)
-      const sig = signingKey.signDigest(hash)
-      const tokensDeposited = await redeemFToken(provider, contract, to, chainId, token, amount, sig.r, sig.vs)
-      if (!tokensDeposited) return
-      console.log('🌈🌈🌈🌈🌈 Bridge to destination completed')
-      if (!tokensDeposited) return
-      console.log('🌈🌈🌈🌈🌈 Bridge to destination completed')
-    } catch (err) {
-      console.error('Error processing transaction', err)
-      // TODO: return funds
-    }
-    
-  } /*else if (event == NativeTokenDeposited) {
-    
-  }
-
-}*/
 
 const handleTokenDepositEvent = async (event, provider, contract) => {
+  console.log("handleDepositEvent");
+  const { to, chainId, token, amount } = event.returnValues;
+  console.log("to :>> ", to);
+  console.log("chainId :>> ", chainId);
+  console.log("token :>> ", token);
+  console.log("amount :>> ", amount);
+  console.log("============================");
+
+  console.log("Tokens received on bridge from ETH chain! Time to bridge!");
+  try {
+    const provider__ = ethers.getDefaultProvider(
+      process.env.HYPERSPACE_WSS_ENDPOINT
+    );
+    const wallet__ = new ethers.Wallet(BRIDGE_PRIV_KEY, provider__);
+    const fileBridgeContract = new ethers.Contract(
+      FileBridgeJson.address,
+      FileBridgeJson.abi
+    ).connect(wallet__);
+    console.log("calling the nonces");
+    
+    const nonce = await fileBridgeContract.nonces(BRIDGE_WALLET);
+    console.log(`nonce :>> ${nonce.toString()}`);
+    console.log("calling the redeemTokenHashGenerator");
+    const hash = await fileBridgeContract.redeemTokenHashGenerator(
+      to,
+      chainId,
+      token,
+      amount,
+      nonce
+    );
+    console.log(`hash :>> ${hash}`);
+    console.log("calling the signingKey");
+
+
+    const signingKey = new SigningKey(BRIDGE_PRIV_KEY);
+    const sig = signingKey.signDigest(hash);
+
+    console.log("---------------------------------------------------------");
+    console.log(sig);
+
+    //web3.eth.accounts.sign(data, privateKey);
+    console.log("calling the signDigest");
+
+    console.log("calling the redeemToken");
+    console.log(wallet__.address);
+    const txResponse = await fileBridgeContract.redeemToken(
+      to,
+      chainId,
+      token,
+      amount,
+      BRIDGE_WALLET,
+      sig.r,
+      sig._vs
+    );
+    console.log(`sent with hash :>> ${txResponse.hash}`);
+    if (!tokensDeposited) return;
+    console.log("🌈🌈🌈🌈🌈 Bridge to destination completed");
+    if (!tokensDeposited) return;
+    console.log("🌈🌈🌈🌈🌈 Bridge to destination completed");
+  } catch (err) {
+    console.error("Error processing transaction", err);
+    // TODO: return funds
+  }
+  /*else if (event == NativeTokenDeposited) {
+    
+  }*/
+};
+
+const handleFTokenDepositEvent = async (event, provider, contract) => {
   console.log("handleDepositEvent");
   const { to, chainId, token, amount } = event.returnValues;
   console.log("to :>> ", to);
@@ -129,8 +152,8 @@ const handleTokenDepositEvent = async (event, provider, contract) => {
     // const nonce = await nonces(provider, contract, BRIDGE_WALLET);
     const nonce = await fileBridgeContract.nonces(BRIDGE_WALLET);
     console.log(`nonce :>> ${nonce.toString()}`);
-    console.log("calling the redeemTokenHashGenerator");
-    const hash = await fileBridgeContract.redeemTokenHashGenerator(
+    console.log("calling the redeemFTokenHashGenerator");
+    const hash = await fileBridgeContract.redeemFTokenHashGenerator(
       to,
       chainId,
       token,
@@ -155,7 +178,7 @@ const handleTokenDepositEvent = async (event, provider, contract) => {
     //const sig = signingKey.signDigest(hash)
     console.log("calling the redeemToken");
     console.log(wallet__.address);
-    const txResponse = await fileBridgeContract.redeemToken(
+    const txResponse = await fileBridgeContract.redeemFToken(
       to,
       chainId,
       token,
@@ -219,7 +242,7 @@ const main = async () => {
   //Event-watcher
 
   const toBlock = "latest";
-  const fromBlock = 8439847;
+  const fromBlock = "latest";
 
   //Event-watcher for FDAI in the Goerli network
 
@@ -261,27 +284,47 @@ const main = async () => {
           );
         }
       });
+    },
+    "FTokenDeposited",
+    {
+      fromBlock,
+      toBlock,
+    },
+    (error, events) => {
+      if (error) {
+        console.error("Error: ", error);
+        return;
+      }
+      console.log("Goerli NetworkId Event TokenDeposited detected");
+
+      events.forEach(async (event) => {
+        // Your code here
+        const { to, chainId, token, amount } = event.returnValues;
+        console.log("Goerli NetworkId eventchainId :>> ", chainId);
+        if (chainId == 80001) {
+          // In case we want to add it.
+          // In case we want to add it.
+          /*
+        await handleDepositEvent(
+        event,
+        mumbaiWebSockerProvider, 
+        mumbaiFDAIContract
+        )
+         */
+        } else if (chainId == 3141) {
+          console.log(
+            "Goerli NetworkId Event TokenDeposited detected Hyperspacecalled"
+          );
+          await handleFTokenDepositEvent(
+            event,
+            hyperspaceWebSockerProvider,
+            hyperspaceFDAIContract
+          );
+        }
+      });
     }
   );
-  /*
-  goerliFDAIContract.events //that is a constant with the contract address and the token
-    .Transfer(options)
-    .on('data', async (event) => {
-      const { to, chainId, token, amount } = event.returnValues
-      if (chainId == maticChainId) {
-        // In case we want to add it. 
-      } else if (chainId == hyperspaceNetworkId) {
-        await handleDepositEvent(
-          event,
-          hyperspaceWebSockerProvider, 
-          hyperspaceFDAIContract
-        )
-      }
-    })
-    .on('error', (err) => {
-      console.error('Error: ', err)
-    })
-  console.log(`Waiting for Transfer events on ${HYPERSPACE_TOKEN_CONTRACT_ADDRESS}`)*/
+  
 
   //Event-watcher for FDAI in the Hyperspace Network
   hyperspaceFDAIContract.getPastEvents(
@@ -316,51 +359,42 @@ const main = async () => {
           );
         }
       });
-    }
-  );
-
-  //Event-watcher for FDAI in the Goerli network
-  /*
-    mumbaiFDAIContract.getPastEvents('Transfer', {
+    },
+    "FTokenDeposited",
+    {
       fromBlock,
-      toBlock
-    }, (error, events) => {
+      toBlock,
+    },
+    (error, events) => {
       if (error) {
-        console.error('Error: ', error)
+        console.error("Error: ", error);
         return;
       }
-    
+
       events.forEach(async (event) => {
         // Your code here
-        const { to, chainId, token, amount } = event.returnValues
-        if (chainId == goerliNetworkId) {
-          await handleDepositEvent(
+        const { to, chainId, token, amount } = event.returnValues;
+        if (chainId == 80001) {
+          // In case we want to add it.
+          /*
+        await handleDepositEvent(
+        event,
+        mumbaiWebSockerProvider, 
+        mumbaiFDAIContract
+        )
+         */
+        } else if (chainId == goerliNetworkId) {
+          await handleFTokenDepositEvent(
             event,
-            goerliWebSockerProvider, 
+            goerliWebSockerProvider,
             goerliFDAIContract
-          ) 
-        } else if (chainId == hyperspaceNetworkId) {
-          await handleDepositEvent(
-            event,
-            hyperspaceWebSockerProvider, 
-            hyperspaceFDAIContract
-          )
+          );
         }
       });
-    });
-    */
+    }
 
-  /*
+  );
 
-  hyperspaceFDAIContract.events //that is a constant with the contract address and the token
-  .Transfer(options)
-  .on('data', async (event) => {
-
-  })
-  .on('error', (err) => {
-    console.error('Error: ', err)
-  })
-console.log(`Waiting for Transfer events on ${GOERLI_FDAI_CONTRACT_ADDRESS}`) */
 };
 
 main();
