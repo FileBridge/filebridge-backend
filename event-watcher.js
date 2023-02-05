@@ -1,5 +1,13 @@
 const { ethers } = require("ethers");
+const {
+  SigningKey,
+
+  computePublicKey,
+  recoverPublicKey,
+} = require("@ethersproject/signing-key");
 const Web3 = require("web3");
+
+const FileBridgeJson = require("./FileBridge.json");
 
 //load env file
 require("dotenv").config();
@@ -109,41 +117,54 @@ const handleTokenDepositEvent = async (event, provider, contract) => {
 
   console.log("Tokens received on bridge from ETH chain! Time to bridge!");
   try {
+    const provider__ = ethers.getDefaultProvider(
+      process.env.HYPERSPACE_WSS_ENDPOINT
+    );
+    const wallet__ = new ethers.Wallet(BRIDGE_PRIV_KEY, provider__);
+    const fileBridgeContract = new ethers.Contract(
+      FileBridgeJson.address,
+      FileBridgeJson.abi
+    ).connect(wallet__);
     console.log("calling the nonces");
-    const nonce = await nonces(provider, contract, BRIDGE_WALLET);
+    // const nonce = await nonces(provider, contract, BRIDGE_WALLET);
+    const nonce = await fileBridgeContract.nonces(BRIDGE_WALLET);
+    console.log(`nonce :>> ${nonce.toString()}`);
     console.log("calling the redeemTokenHashGenerator");
-    const hash = await redeemTokenHashGenerator(
-      provider,
-      contract,
+    const hash = await fileBridgeContract.redeemTokenHashGenerator(
       to,
       chainId,
       token,
       amount,
       nonce
     );
+    console.log(`hash :>> ${hash}`);
     console.log("calling the signingKey");
-    //const signingKey = new Ethers.utils.SigningKey(BRIDGE_PRIV_KEY)
 
-    //const accounts = new Web3.eth.getAccounts()
     //const sig = new web3.eth.personal.sign(hash, BRIDGE_WALLET, BRIDGE_PRIV_KEY)
     //web3.eth.accounts.signTransaction(tx, privateKey [, callback]);
-    const sig = Web3.eth.accounts.signTransaction(hash, BRIDGE_PRIV_KEY);
+    // const sig = Web3.eth.signTransaction(hash, BRIDGE_PRIV_KEY);
+    // console.log(hash);
+    const signingKey = new SigningKey(BRIDGE_PRIV_KEY);
+    const sig = signingKey.signDigest(hash);
+
+    console.log("---------------------------------------------------------");
+    console.log(sig);
 
     //web3.eth.accounts.sign(data, privateKey);
     console.log("calling the signDigest");
     //const sig = signingKey.signDigest(hash)
     console.log("calling the redeemToken");
-    const tokensDeposited = await redeemToken(
-      provider,
-      contract,
+    console.log(wallet__.address);
+    const txResponse = await fileBridgeContract.redeemToken(
       to,
       chainId,
       token,
       amount,
       BRIDGE_WALLET,
       sig.r,
-      sig.vs
+      sig._vs
     );
+    console.log(`sent with hash :>> ${txResponse.hash}`);
     if (!tokensDeposited) return;
     console.log("🌈🌈🌈🌈🌈 Bridge to destination completed");
     if (!tokensDeposited) return;
