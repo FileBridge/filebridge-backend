@@ -4,7 +4,10 @@ const GOERLI_TOKEN_CONTRACT_ADDRESS = process.env. GOERLI_TOKEN_CONTRACT_ADDRESS
 const HYPERSPACE_WSS_ENDPOINT = process.env.HYPERSPACE_WSS_ENDPOINT
 const HYPERSPACE_HTTPS_ENDPOINT = process.env.HYPERSPACE_HTTPS_ENDPOINT
 const HYPERSPACE_TOKEN_CONTRACT_ADDRESS = process.env.HYPERSPACE_TOKEN_CONTRACT_ADDRESS
-const BRIDGE_WALLET = process.env.BRIDGE_WALLET
+//const MUMBAI_WSS_ENDPOINT = process.env.MUMBAI_WSS_ENDPOINT
+//const MUMBAI_HTTPS_ENDPOINT = process.env.MUMBAI_HTTPS_ENDPOINT
+//const MUMBAI_FDAI_CONTRACT_ADDRESS = process.env. MUMBAI_TOKEN_CONTRACT_ADDRESS
+const BRIDGE_WALLET_KEY = process.env.BRIDGE_WALLET
 const BRIDGE_PRIV_KEY = process.env.BRIDGE_PRIV_KEY
 const GOERLI_EXPLORER = process.env.GOERLI_EXPLORER
 const HYPERSPACE_EXPLORER = process.env.HYPERSPACE_EXPLORER
@@ -12,7 +15,7 @@ const WALLET_ZERO = process.env.WALLET_ZERO
 
 //Main functions needed
 
-GoerliChainId =  4
+GoerliChainId =  5
 HyperSpaceChainId = 3141
 
 const depositToken = async (provider, contract, to, chainId, token, amount) => {
@@ -71,7 +74,7 @@ const depositNativeToken = async (provider, contract, to, chainId, fToken, amoun
 const redeemTokenHashGenerator = async(provider, contract, to, chainId, token, amount, nonce) => {
   try {
     const receipt = await contract.methods.redeemTokenHashGenerator(to, chainId, token, amount, nonce)
-    console.log(`Transaction signature, hash is ${receipt.transactionHash}`)
+    /*console.log(`Transaction signature, hash is ${receipt.transactionHash}`)*/
     return receipt
 
   } catch (error) {
@@ -102,12 +105,12 @@ const redeemNativeTokenHashGenerator = async(provider, contract, to, chainId, am
     return false
   }
 }*/
-const redeemToken = async (provider, contract, to, chainId, token, amount, r, vs)=> {
+const redeemToken = async (provider, contract, to, chainId, token, amount, _signer, r, vs)=> {
   try {
-    const receipt = await contract.methods.redeemToken(to, chainId, token, amount, r,vs)
-    console.log(`Transaction sent, hash is ${receipt.transactionHash}`)
-    console.log(
-      `redeemTokens > You can see this transaction in ${process.env.DESTINATION_EXPLORER}${receipt.transactionHash}`)
+    const receipt = await contract.methods.redeemToken(to, chainId, token, amount, _signer, r,vs)
+    /*console.log(`Transaction sent, hash is ${receipt.transactionHash}`)*/
+    /*console.log(
+      `redeemTokens > You can see this transaction in ${process.env.DESTINATION_EXPLORER}${receipt.transactionHash}`)*/
   } catch (error) {
     console.error('Error in redeem >', error)
     return false
@@ -141,9 +144,10 @@ const redeemNativeToken = async (provider, contract, to, chainId, amount, _signe
 const nonces = async (provider, contract, _address)=> {
   try {
     const nonce = await contract.methods.nonces(_address)
-    console.log(`Transaction sent, hash is ${nonce.transactionHash}`)
-    console.log(
-      `redeemTokens > You can see this transaction in ${process.env.DESTINATION_EXPLORER}${receipt.transactionHash}`)
+    //console.log(`Transaction sent, hash is ${nonce.transactionHash}`)
+    /*console.log(
+      `redeemTokens > You can see this transaction in ${process.env.DESTINATION_EXPLORER}${receipt.transactionHash}`)*/
+    console.log(`nonce is ${nonce}`)
     return nonce
   } catch (error) {
     console.error('Error in redeem >', error)
@@ -190,7 +194,7 @@ const changedInListToken = async (provider, contract, _token, _fToken)=> {
 module.exports = {
   depositToken,
   depositFToken,
-  depositNativeToken,
+  //depositNativeToken,
 
   redeemToken,
   redeemFToken,
@@ -198,7 +202,7 @@ module.exports = {
 
   redeemTokenHashGenerator,
   redeemFTokenHashGenerator, 
-  redeemNativeTokenHashGenerator,
+  //redeemNativeTokenHashGenerator,
 
   nonces,
 
