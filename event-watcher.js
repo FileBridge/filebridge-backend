@@ -241,7 +241,7 @@ const main = async () => {
     //Event-watcher
 
     const toBlock = "latest"
-    const fromBlock = (await web3.eth.getBlockNumber()) - 10
+    const fromBlock = (await web3.eth.getBlockNumber()) - 1
 
     //Event-watcher for FDAI in the Goerli network
 
