@@ -238,6 +238,7 @@ const main = async () => {
         FDAI_ABIJSON.abi,
         HYPERSPACE_FDAI_CONTRACT_ADDRESS
     )
+
     const mumbaiFDAIContract = new mumbaiWebSockerProvider.eth.Contract(
         FDAI_ABIJSON.abi,
         GOERLI_FDAI_CONTRACT_ADDRESS
@@ -249,18 +250,27 @@ const main = async () => {
   )
   */
 
-    //Event-watcher
+    let toBlockGoerli = await goerliWebSockerProvider.eth.getBlockNumber(),
+        toBlockMumbai = await mumbaiWebSockerProvider.eth.getBlockNumber(),
+        toBlockHyperspace =
+            await hyperspaceWebSockerProvider.eth.getBlockNumber()
 
-    const toBlock = "latest"
-    const fromBlock = (await web3.eth.getBlockNumber()) - 2
+    const fromBlockGoerli =
+        (await goerliWebSockerProvider.eth.getBlockNumber()) - 50
+
+    const fromBlockMumbai =
+        (await mumbaiWebSockerProvider.eth.getBlockNumber()) - 50
+
+    const fromBlockHyperspace =
+        (await hyperspaceWebSockerProvider.eth.getBlockNumber()) - 3
 
     //Event-watcher for FDAI in the Goerli network
 
     goerliFDAIContract.getPastEvents(
         "TokenDeposited",
         {
-            fromBlock,
-            toBlock,
+            fromBlockGoerli,
+            toBlockGoerli,
         },
         (error, events) => {
             if (error) {
@@ -292,114 +302,55 @@ const main = async () => {
             })
         }
     )
-    goerliFDAIContract.getPastEvents(
-        "FTokenDeposited",
-        {
-            fromBlock,
-            toBlock,
-        },
-        (error, events) => {
-            if (error) {
-                console.error("Error: ", error)
-                return
-            }
-            console.log("Goerli NetworkId Event TokenDeposited detected")
+    // goerliFDAIContract.getPastEvents(
+    //     "FTokenDeposited",
+    //     {
+    //         fromBlockGoerli,
+    //         toBlockGoerli,
+    //     },
+    //     (error, events) => {
+    //         if (error) {
+    //             console.error("Error: ", error)
+    //             return
+    //         }
+    //         console.log(
+    //             "Goerli NetworkId Event TokenDeposited detected"
+    //         )
 
-            events.forEach(async (event) => {
-                // Your code here
-                const { to, chainId, token, amount } = event.returnValues
-                console.log("Goerli NetworkId eventchainId :>> ", chainId)
-                if (chainId == 80001) {
-                    await handleFTokenDepositEvent(
-                        event,
-                        mumbaiWebSockerProvider,
-                        mumbaiFDAIContract
-                    )
-                } else if (chainId == 3141) {
-                    console.log(
-                        "Goerli NetworkId Event TokenDeposited detected Hyperspacecalled"
-                    )
-                    await handleFTokenDepositEvent(
-                        event,
-                        hyperspaceWebSockerProvider,
-                        hyperspaceFDAIContract
-                    )
-                }
-            })
-        }
-    )
-
-    //Event-watcher for FDAI in the Hyperspace Network
-    hyperspaceFDAIContract.getPastEvents(
-        "TokenDeposited",
-        {
-            fromBlock,
-            toBlock,
-        },
-        (error, events) => {
-            if (error) {
-                console.error("Error: ", error)
-                return
-            }
-            console.log("HyperSpace NetworkId Event TokenDeposited detected")
-
-            events.forEach(async (event) => {
-                // Your code here
-                const { to, chainId, token, amount } = event.returnValues
-                if (chainId == 80001) {
-                    await handleTokenDepositEvent(
-                        event,
-                        mumbaiWebSockerProvider,
-                        mumbaiFDAIContract
-                    )
-                } else if (chainId == goerliNetworkId) {
-                    await handleTokenDepositEvent(
-                        event,
-                        goerliWebSockerProvider,
-                        goerliFDAIContract
-                    )
-                }
-            })
-        }
-    )
-    hyperspaceFDAIContract.getPastEvents(
-        "FTokenDeposited",
-        {
-            fromBlock,
-            toBlock,
-        },
-        (error, events) => {
-            if (error) {
-                console.error("Error: ", error)
-                return
-            }
-
-            events.forEach(async (event) => {
-                // Your code here
-                const { to, chainId, token, amount } = event.returnValues
-                if (chainId == 80001) {
-                    await handleFTokenDepositEvent(
-                        event,
-                        mumbaiWebSockerProvider,
-                        mumbaiFDAIContract
-                    )
-                } else if (chainId == goerliNetworkId) {
-                    await handleFTokenDepositEvent(
-                        event,
-                        goerliWebSockerProvider,
-                        goerliFDAIContract
-                    )
-                }
-            })
-        }
-    )
+    //         events.forEach(async (event) => {
+    //             // Your code here
+    //             const { to, chainId, token, amount } =
+    //                 event.returnValues
+    //             console.log(
+    //                 "Goerli NetworkId eventchainId :>> ",
+    //                 chainId
+    //             )
+    //             if (chainId == 80001) {
+    //                 await handleFTokenDepositEvent(
+    //                     event,
+    //                     mumbaiWebSockerProvider,
+    //                     mumbaiFDAIContract
+    //                 )
+    //             } else if (chainId == 3141) {
+    //                 console.log(
+    //                     "Goerli NetworkId Event TokenDeposited detected Hyperspacecalled"
+    //                 )
+    //                 await handleFTokenDepositEvent(
+    //                     event,
+    //                     hyperspaceWebSockerProvider,
+    //                     hyperspaceFDAIContract
+    //                 )
+    //             }
+    //         })
+    //     }
+    // )
 
     //Event-watcher for FDAI in the Hyperspace Network
     mumbaiFDAIContract.getPastEvents(
         "TokenDeposited",
         {
-            fromBlock,
-            toBlock,
+            fromBlockMumbai,
+            toBlockMumbai,
         },
         (error, events) => {
             if (error) {
@@ -427,28 +378,63 @@ const main = async () => {
             })
         }
     )
-    mumbaiFDAIContract.getPastEvents(
-        "FTokenDeposited",
+    // mumbaiFDAIContract.getPastEvents(
+    //     "FTokenDeposited",
+    //     {
+    //         fromBlockMumbai,
+    //         toBlockMumbai,
+    //     },
+    //     (error, events) => {
+    //         if (error) {
+    //             console.error("Error: ", error)
+    //             return
+    //         }
+    //         events.forEach(async (event) => {
+    //             // Your code here
+    //             const { to, chainId, token, amount } =
+    //                 event.returnValues
+    //             if (chainId == 3141) {
+    //                 await handleFTokenDepositEvent(
+    //                     event,
+    //                     hyperspaceWebSockerProvider,
+    //                     hyperspaceFDAIContract
+    //                 )
+    //             } else if (chainId == 5) {
+    //                 await handleFTokenDepositEvent(
+    //                     event,
+    //                     goerliWebSockerProvider,
+    //                     goerliFDAIContract
+    //                 )
+    //             }
+    //         })
+    //     }
+    // )
+
+    //Event-watcher for FDAI in the Hyperspace Network
+    hyperspaceFDAIContract.getPastEvents(
+        "TokenDeposited",
         {
-            fromBlock,
-            toBlock,
+            fromBlockHyperspace,
+            toBlockHyperspace,
         },
         (error, events) => {
             if (error) {
                 console.error("Error: ", error)
                 return
             }
+            console.log("HyperSpace NetworkId Event TokenDeposited detected")
+
             events.forEach(async (event) => {
                 // Your code here
                 const { to, chainId, token, amount } = event.returnValues
-                if (chainId == 3141) {
-                    await handleFTokenDepositEvent(
+                if (chainId == 80001) {
+                    await handleTokenDepositEvent(
                         event,
-                        hyperspaceWebSockerProvider,
-                        hyperspaceFDAIContract
+                        mumbaiWebSockerProvider,
+                        mumbaiFDAIContract
                     )
-                } else if (chainId == 5) {
-                    await handleFTokenDepositEvent(
+                } else if (chainId == goerliNetworkId) {
+                    await handleTokenDepositEvent(
                         event,
                         goerliWebSockerProvider,
                         goerliFDAIContract
@@ -457,6 +443,39 @@ const main = async () => {
             })
         }
     )
-}
+    // hyperspaceFDAIContract.getPastEvents(
+    //     "FTokenDeposited",
+    //     {
+    //         fromBlockHyperspace,
+    //         toBlockHyperspace,
+    //     },
+    //     (error, events) => {
+    //         if (error) {
+    //             console.error("Error: ", error)
+    //             return
+    //         }
 
+    //         events.forEach(async (event) => {
+    //             // Your code here
+    //             const { to, chainId, token, amount } =
+    //                 event.returnValues
+    //             if (chainId == 80001) {
+    //                 await handleFTokenDepositEvent(
+    //                     event,
+    //                     mumbaiWebSockerProvider,
+    //                     mumbaiFDAIContract
+    //                 )
+    //             } else if (chainId == goerliNetworkId) {
+    //                 await handleFTokenDepositEvent(
+    //                     event,
+    //                     goerliWebSockerProvider,
+    //                     goerliFDAIContract
+    //                 )
+    //             }
+    //         })
+    //     }
+    // )
+}
 main()
+// Update the Timer
+setInterval(main, 30000)
