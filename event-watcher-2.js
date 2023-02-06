@@ -55,11 +55,12 @@ GoerliChainId =  5
 HyperSpaceChainId = 3141
 mumbaiChainId =
 */
-/*
+
 const chainMap = {
   5: GOERLI_HTTPS_ENDPOINT,
   3141: HYPERSPACE_HTTPS_ENDPOINT,
-};*/
+  80001: MUMBAI_HTTPS_ENDPOINT
+};
 
 const DAI_ABIJSON = require("./DAI.json");
 const FDAI_ABIJSON = require("./FileBridge.json");
@@ -76,9 +77,9 @@ const handleTokenDepositEvent = async (event, provider, contract) => {
 
   console.log("Tokens received on bridge from ETH chain! Time to bridge!");
   try {
-    const provider__ = ethers.getDefaultProvider(//ChainMap[ChainId]);
-      process.env.HYPERSPACE_WSS_ENDPOINT
-    );
+    const provider__ = ethers.getDefaultProvider(ChainMap[ChainId]);
+      //process.env.HYPERSPACE_WSS_ENDPOINT
+    //);
     const wallet__ = new ethers.Wallet(BRIDGE_PRIV_KEY, provider__);
     const fileBridgeContract = new ethers.Contract(
       FileBridgeJson.address,
@@ -95,10 +96,11 @@ const handleTokenDepositEvent = async (event, provider, contract) => {
       chainId,
       token,
       amount,
-      nonce
+      nonce, 
+
+
     );
     console.log(`hash :>> ${hash}`);
-    console.log("Transactioncount", Web3.eth.getTransactionCount(BRIDGE_WALLET));
     console.log("calling the signingKey");
 
 
@@ -216,15 +218,15 @@ const main = async () => {
   console.log("BRIDGE_WALLET:>> ", BRIDGE_WALLET);
   goerliWebSockerProvider.eth.accounts.wallet.add(BRIDGE_PRIV_KEY);
   hyperspaceWebSockerProvider.eth.accounts.wallet.add(BRIDGE_PRIV_KEY);
-  //mumbaiWebSockerProvider.eth.accounts.wallet.add(BRIDGE_WALLET)
+  mumbaiWebSockerProvider.eth.accounts.wallet.add(BRIDGE_PRIV_KEY)
 
   const goerliNetworkId = await goerliWebSockerProvider.eth.net.getId(); // I have the Id in the event
   const hyperspaceNetworkId = await hyperspaceWebSockerProvider.eth.net.getId(); //I have the Id in the event
-  //const mumbaiNetworkId = await mumbaiWebSockerProvider.eth.net.getId()
+  const mumbaiNetworkId = await mumbaiWebSockerProvider.eth.net.getId()
 
   console.log("Goerli NetworkId :>> ", goerliNetworkId);
   console.log("HyperSpace NetworkId :>> ", hyperspaceNetworkId);
-  //console.log('Mumbai NetworkId :>> ', mumbaiNetworkId)
+  console.log('Mumbai NetworkId :>> ', mumbaiNetworkId)
 
   // Contracts and tokens we want to listen from.
 
@@ -237,6 +239,10 @@ const main = async () => {
     FDAI_ABIJSON.abi,
     HYPERSPACE_FDAI_CONTRACT_ADDRESS
   );
+  const mumbaiFDAIContract = new mumbaiWebSockerProvider.eth.Contract(
+    FDAI_ABIJSON.abi,
+    GOERLI_FDAI_CONTRACT_ADDRESS
+  );
   /*
   const mumbaiFDAIContract = new mumbaiWebSockerProvider.eth.Contract(
   FDAI_ABIJSON.abi,
@@ -247,7 +253,7 @@ const main = async () => {
   //Event-watcher
 
   const toBlock = "latest";
-  const fromBlock = (await web3.eth.getBlockNumber()) - 300;
+  const fromBlock = (await web3.eth.getBlockNumber()) -20;
 
   //Event-watcher for FDAI in the Goerli network
 
@@ -323,7 +329,6 @@ const main = async () => {
       });
     }
   );
-  
 
   //Event-watcher for FDAI in the Hyperspace Network
   hyperspaceFDAIContract.getPastEvents(
@@ -337,6 +342,7 @@ const main = async () => {
         console.error("Error: ", error);
         return;
       }
+      console.log("HyperSpace NetworkId Event TokenDeposited detected");
 
       events.forEach(async (event) => {
         // Your code here
@@ -388,6 +394,70 @@ const main = async () => {
       });
     }
 
+  );
+  
+  //Event-watcher for FDAI in the Hyperspace Network
+  mumbaiFDAIContract.getPastEvents(
+    "TokenDeposited",
+    {
+      fromBlock,
+      toBlock,
+    },
+    (error, events) => {
+      if (error) {
+        console.error("Error: ", error);
+        return;
+      }
+      console.log("Mumbai NetworkId Event TokenDeposited detected");
+
+      events.forEach(async (event) => {
+        // Your code here
+        const { to, chainId, token, amount } = event.returnValues;
+        if (chainId == 80001) {
+          await handleTokenDepositEvent(
+            event,
+            hyperspaceWebSockerProvider,
+            hyperspaceFDAIContract
+          );
+        } else if (chainId == 5) {
+          await handleTokenDepositEvent(
+            event,
+            goerliWebSockerProvider,
+            goerliFDAIContract
+          );
+        }
+      });
+    }
+  );
+  mumbaiFDAIContract.getPastEvents(
+    "FTokenDeposited",
+    {
+      fromBlock,
+      toBlock,
+    },
+    (error, events) => {
+      if (error) {
+        console.error("Error: ", error);
+        return;
+      }
+      events.forEach(async (event) => {
+        // Your code here
+        const { to, chainId, token, amount } = event.returnValues;
+        if (chainId == 3141) {
+          await handleFTokenDepositEvent(
+            event,
+            hyperspaceWebSockerProvider, 
+            hyperspaceFDAIContract
+          );
+        } else if (chainId == 5) {
+          await handleFTokenDepositEvent(
+            event,
+            goerliWebSockerProvider,
+            goerliFDAIContract
+          );
+        }
+      });
+    }
   );
 
 };
